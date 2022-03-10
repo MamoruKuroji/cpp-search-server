@@ -46,7 +46,7 @@ void TestAddingDocumentContent() {
     
 }
 
-void TestExludeMinusWordsFromDocument() {
+void TestExcludeMinusWordsFromDocument() {
     SearchServer server;
     const string document_text = "ухоженный пёс выразительные глаза и модный ошейник"s;
     server.AddDocument(0, document_text, DocumentStatus::ACTUAL, { 5 });
@@ -86,7 +86,11 @@ void TestSortingDocumentContentByRelevance() {
     const Document& doc1 = found_docs[1];
     ASSERT_EQUAL_HINT(doc0.id, doc_id_1, "Incorrect searching by relevance");
     ASSERT_EQUAL_HINT(doc1.id, doc_id, "Incorrect searching by relevance");
-    ASSERT_EQUAL_HINT(doc0.relevance, doc1.relevance, "Relevance don't decrease");
+    bool isDecrease = false;
+    if(doc0.relevance > doc1.relevance){
+        isDecrease = true;
+    }
+    ASSERT_HINT(isDecrease, "Relevance don't decrease");
 }
 
 void TestCalculateRatingOfDocumentContent() {    
@@ -143,11 +147,11 @@ void TestCalculateRelevanceOfDocumentContent() {
     const auto found_docs = server.FindTopDocuments("пёс выразительные глаза"s, DocumentStatus::BANNED);
     const Document& doc0 = found_docs[0];
     const double EPSILON = 1e-6;
-    bool IsEquel = false;
-    if((doc0.relevance - ((log(1 * 1.0 / 1))*3)) < EPSILON) {
-        IsEquel = true;
+    bool isEqual = false;
+    if(abs(doc0.relevance - ((log(1 * 1.0 / 1))*3)) < EPSILON) {
+        isEqual = true;
     }
-    ASSERT_HINT(IsEquel, "Incorrect calculate relevance");
+    ASSERT_HINT(isEqual, "Incorrect calculate relevance");
     
 }
 
@@ -156,7 +160,7 @@ void TestSearchServer() {
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     // Не забудьте вызывать остальные тесты здесь
     RUN_TEST(TestAddingDocumentContent);
-    RUN_TEST(TestExludeMinusWordsFromDocument);
+    RUN_TEST(TestExcludeMinusWordsFromDocument);
     RUN_TEST(TestMatchingDocumentContentWithSearchingContent);
     RUN_TEST(TestSortingDocumentContentByRelevance);
     RUN_TEST(TestCalculateRatingOfDocumentContent);
