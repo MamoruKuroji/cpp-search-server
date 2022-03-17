@@ -69,10 +69,9 @@ public:
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words) {
         for (const string& word : stop_words) {
-            for (const char& c : word) {
-                if (c >= '\0' && c < ' ') {
-                    throw invalid_argument("Стоп слова содержать спец. символы."s);
-                }
+            if(!IsValidWord(word)){
+                string error_text = "Стоп слово "s + word + " содержит спец. символы."s;
+                throw invalid_argument(error_text);
             }
             if (word != ""s)
             {
@@ -83,33 +82,15 @@ public:
     }
 
     explicit SearchServer(const string& stop_words_text) {
-        for (const char& c : stop_words_text) {
-            if (c >= '\0' && c < ' ') {
-                throw invalid_argument("Стоп слова содержать спец. символы."s);
-            }
-        }
-        for (const string& word : SplitIntoWords(stop_words_text)) {
-            if (word != ""s)
-            {
-                stop_words_.insert(word);
-            }
-        }
-    }
-
-    void SetStopWords(const string& text) {
-        for (const char& c : text) {
-            if (c >= '\0' && c < ' ') {
-                throw invalid_argument("Стоп слова содержать спец. символы."s);
-            }
-        }
-        for (const string& word : SplitIntoWords(text)) {
-            stop_words_.insert(word);
-        }
+        SearchServer(SplitIntoWords(stop_words_text));
     }
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
-        if (!IsValidWord(document)) {
-            throw invalid_argument("Документ не может содержать спец. символы."s);
+        for (const string& word : SplitIntoWords(document)) {
+            if(!IsValidWord(word)){
+                string error_text = "Стоп слово "s + word + " содержит спец. символы."s;
+                throw invalid_argument(error_text);
+            }
         }
         if (document_id < 0) {
             throw invalid_argument("id документа не может быть отрицательным."s);
@@ -134,12 +115,18 @@ public:
 
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("Запрос не может содержать спец. символы."s);
+        for (const string& word : SplitIntoWords(raw_query)) {
+            if(!IsValidWord(word)){
+                string error_text = "Запрос содержит содержит спец. символы в слове "s + word + "."s;
+                throw invalid_argument(error_text);
+            }
         }
 
-        if (!IsWalidQuery(raw_query)) {
-            throw invalid_argument("Неправильное использование оператора исключения слова"s);
+        for (const string& word : SplitIntoWords(raw_query)) {
+            if (!IsValidQuery(word)) {
+                string error_text = "Неправильное использование оператора исключения в слове "s + word + "."s;
+                throw invalid_argument(error_text);
+            }
         }
 
         const Query query = ParseQuery(raw_query);
@@ -161,25 +148,11 @@ public:
     }
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("Запрос не может содержать спец. символы."s);
-        }
-
-        if (!IsWalidQuery(raw_query)) {
-            throw invalid_argument("Неправильное использование оператора исключения слова"s);
-        }
         auto predicate = [status](int document_id, DocumentStatus document_status, int rating) { return document_status == status; };
         return FindTopDocuments(raw_query, predicate);
     }
 
     vector<Document> FindTopDocuments(const string& raw_query) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("Запрос не может содержать спец. символы."s);
-        }
-
-        if (!IsWalidQuery(raw_query)) {
-            throw invalid_argument("Неправильное использование оператора исключения слова"s);
-        }
         return FindTopDocuments(raw_query, [](int document_id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; });
     }
 
@@ -189,7 +162,8 @@ public:
 
     int GetDocumentId(int index) const {
         if (index > ids_.size()) {
-            throw out_of_range("id с таким индексом нет в базе данных сервера");
+            string error_text = "id с индексом "s + to_string(index) + " нет в базе данных сервера"s;
+            throw out_of_range(error_text);
         }
         else {
             return ids_[index];
@@ -197,12 +171,17 @@ public:
     }
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("Запрос не может содержать спец. символы."s);
+        for (const string& word : SplitIntoWords(raw_query)) {
+            if(!IsValidWord(word)){
+                string error_text = "Запрос содержит содержит спец. символы в слове "s + word + "."s;
+                throw invalid_argument(error_text);
+            }
         }
-
-        if (!IsWalidQuery(raw_query)) {
-            throw invalid_argument("Неправильное использование оператора исключения слова"s);
+        for (const string& word : SplitIntoWords(raw_query)) {
+            if (!IsValidQuery(word)) {
+                string error_text = "Неправильное использование оператора исключения в слове "s + word + "."s;
+                throw invalid_argument(error_text);
+            }
         }
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
@@ -244,7 +223,7 @@ public:
                 });
         }
 
-        static bool IsWalidQuery(const string& raw_query) {
+        static bool IsValidQuery(const string& raw_query) {
             char c = '-';
             for (int i = 0; i < raw_query.size(); ++i) {
                 if ((raw_query[i] == c && raw_query[++i] == c) ||
