@@ -1,6 +1,7 @@
 //Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #pragma once
 #include <iostream>
+#include <vector>
 
 enum class DocumentStatus {
     ACTUAL,
@@ -11,11 +12,7 @@ enum class DocumentStatus {
 
 struct Document {
     Document() = default;
-    Document(int id, double relevance, int rating)
-        : id(id)
-        , relevance(relevance)
-        , rating(rating) {
-    }
+    Document(int id, double relevance, int rating);
     int id = 0;
     double relevance = 0.0;
     int rating = 0;
@@ -23,3 +20,7 @@ struct Document {
 };
 
 std::ostream& operator<<(std::ostream& out, const Document& document);
+
+void PrintDocument(const Document& document);
+
+void PrintMatchDocumentResult(int document_id, const std::vector<std::string>& words, DocumentStatus status);
