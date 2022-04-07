@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <iterator>
 
 #include "document.h"
 #include "read_input_functions.h"
@@ -52,6 +53,14 @@ public:
  
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
     
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    
+    void RemoveDocument(int document_id);
+    
+    std::set<int>::iterator begin();
+    
+    std::set<int>::iterator end();
+    
 private:
     struct DocumentData {
         int rating;
@@ -61,7 +70,8 @@ private:
     const std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::map<int, DocumentData> documents_;
-    std::vector<int> document_ids_;
+    std::set<int> document_ids_;
+    std::map<int, std::map<std::string, double>> ids_word_freqs_ = {{-1, {}}};
     
     bool IsStopWord(const std::string& word) const;
     
@@ -152,3 +162,5 @@ std::vector<Document> SearchServer::FindAllDocuments(const Query& query,
     }
     return matched_documents;
 }
+
+
