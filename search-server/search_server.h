@@ -275,7 +275,8 @@ std::vector<Document> SearchServer::FindAllDocuments(std::execution::parallel_po
     
     
     std::vector<Document> matched_documents;
-    for_each (policy, ordinary_map.begin(), ordinary_map.end(), [&](const auto& doc_map) {
+    matched_documents.reserve(ordinary_map.size());
+    for_each (ordinary_map.begin(), ordinary_map.end(), [&](const auto& doc_map) {
         matched_documents.push_back(
             { doc_map.first, doc_map.second, documents_.at(doc_map.first).rating });
     });
