@@ -1,6 +1,3 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
-
-
 #include "read_input_functions.h"
 #include <string>
 
